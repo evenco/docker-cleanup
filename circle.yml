@@ -1,0 +1,15 @@
+machine:
+  services:
+    - docker
+
+test:
+  override:
+    - docker build -t evenco/docker-cleanup .
+
+deployment:
+  prod:
+    branch: master
+    commands:
+      - sudo pip install "awscli>=1.9.15"
+      - git clone git@github.com:evenco/deploy-scripts.git
+      - deploy-scripts/ecr-push.sh evenco/docker-cleanup:latest docker-cleanup:latest
