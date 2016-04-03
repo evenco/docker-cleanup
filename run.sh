@@ -104,8 +104,13 @@ do
     rm -f CreatedContainerToClean
     comm -12 CreatedContainerIdList <(docker ps -a -q -f status=created | sort) > CreatedContainerToClean
     if [ -s CreatedContainerToClean ]; then
-        echo "=> Start to clean $(cat CreatedContainerToClean | wc -l) created/stuck containers"
-        docker rm -v $(cat CreatedContainerToClean)
+        while read CONTAINER_ID; do
+          CONTAINER_IMAGE=$(docker inspect --format='{{(index .Config.Image)}}' $CONTAINER_ID)
+          if [[ ! "${arr_keep_containers[@]}" =~ "${CONTAINER_IMAGE}" ]]; then
+            echo "Removing created/stuck container $CONTAINER_ID"
+            docker rm -v $CONTAINER_ID
+          fi
+        done <CreatedContainerToClean
     fi
 
     # Remove images being used by containers from the delete list again. This prevents the images being pulled from deleting
